@@ -1,0 +1,30 @@
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
+
+    <broker brokerName="mainBroker" xmlns="http://activemq.apache.org/schema/core">
+        <transportConnectors>
+            <transportConnector name="transport" uri="tcp://localhost:61616"/>
+        </transportConnectors>
+        <!--destinationPolicy>
+            <policyMap>
+                <policyEntries>
+                    <policyEntry queue="TEST.>" allConsumersExclusiveByDefault="true"/>
+                </policyEntries>
+            </policyMap>
+        </destinationPolicy-->
+        <persistenceAdapter>
+            <memoryPersistenceAdapter/>
+        </persistenceAdapter>
+        <!--destinations>
+            <queue physicalName="TEST.QUEUE1"/>
+            <queue physicalName="TEST.QUEUE2"/>
+            <queue physicalName="TEST.QUEUE3"/>
+        </destinations-->
+    </broker>
+
+</beans>
