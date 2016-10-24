@@ -14,7 +14,9 @@ public class ErrorReport implements Serializable {
         this.clientId = clientId;
         this.sessionId = sessionId;
     }
-
+    public static ErrorReportBuilder builder() {
+        return new ErrorReportBuilder();
+    }
     public LoggingEvent getLoggingEvent() {
         return loggingEvent;
     }

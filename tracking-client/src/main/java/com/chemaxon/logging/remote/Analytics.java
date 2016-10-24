@@ -5,8 +5,6 @@ import com.chemaxon.logging.remote.transfer.ErrorReportBuilder;
 import com.google.common.base.Optional;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.command.ActiveMQObjectMessage;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.net.PersistentJMSAppender;
 import org.apache.log4j.spi.LoggingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +19,18 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
+import java.util.ArrayList;
+import java.util.EventObject;
+import java.util.List;
+import java.util.concurrent.SynchronousQueue;
 
-public class RemoteLogger implements Runnable, ExceptionListener {
-    private static final String JMS_APPENDER_NAME = "jms";
+public class Analytics implements Runnable, ExceptionListener, Analytics.LocalMessageProducerListener {
 
-    private static final Logger localLogger = LoggerFactory.getLogger(RemoteLogger.class);
-
-    private static final String REMOTE_LOGGER_NAME = "remote";
-    public static final Logger remoteLogger = LoggerFactory.getLogger(REMOTE_LOGGER_NAME);
+    private static final Logger logger = LoggerFactory.getLogger(Analytics.class);
 
     private static final int SLEEP_TIME = 3000;
+
+    private final SynchronousQueue<String> messageQueue = new SynchronousQueue<String>();
 
 
     private final String clientId;
@@ -38,19 +38,39 @@ public class RemoteLogger implements Runnable, ExceptionListener {
 
     private boolean isRunning = true;
 
-    private RemoteLogger(String clientId, String sessionId) {
+    Analytics(String clientId, String sessionId) {
         this.clientId = clientId;
         this.sessionId = sessionId;
     }
 
-    public static Thread start(String clientId, String sessionId) {
-        final RemoteLogger remoteLogger = new RemoteLogger(clientId,sessionId);
+    public static AnalyticsBuilder builder() {
+        return new AnalyticsBuilder();
+    }
 
-        Thread loggerThread = new Thread(remoteLogger, "RemoteLogger main thread");
+    public static Thread start(String clientId, String sessionId) {
+        final Analytics analytics = new AnalyticsBuilder().setClientId(clientId).setSessionId(sessionId).build();
+
+        Thread loggerThread = new Thread(analytics, "Analytics main thread");
         loggerThread.setDaemon(false);
         loggerThread.start();
 
         return loggerThread;
+    }
+
+    @Override
+    public void received(LocalMessageProducerEvent event) {
+
+    }
+
+    private class LocalMessageProducerEvent extends EventObject {
+
+        public LocalMessageProducerEvent(Object o) {
+            super(o);
+        }
+    }
+
+    public interface LocalMessageProducerListener {
+        void received(LocalMessageProducerEvent event);
     }
 
     public void run() {
@@ -65,9 +85,35 @@ public class RemoteLogger implements Runnable, ExceptionListener {
             final Optional<MessageProducer> remoteProducer = getRemoteProducer(remoteConnection);
 
             if (localConnection.isPresent()) {
-                setupJMSAppenderForLogger(); // we had to wait until active-mq started
+                new Thread(new Runnable() {
+                    private final List<LocalMessageProducerListener> listeners = new ArrayList<LocalMessageProducerListener>();
 
-                localLogger.info("loop started, wait for a message");
+                    public synchronized void addLocalMessageProducerListener(LocalMessageProducerListener localMessageProducerListener) {
+                        listeners.add(localMessageProducerListener);
+                    }
+
+                    public synchronized void removeLocalMessageProducerListener(LocalMessageProducerListener localMessageProducerListener) {
+                        listeners.remove(localMessageProducerListener);
+                    }
+
+                    private synchronized void fireLocalMessageProducerEvent() {
+                        for (LocalMessageProducerListener listener : listeners) {
+                            listener.received(new LocalMessageProducerEvent("started"));
+                        }
+                    }
+
+                    @Override
+                    public void run() {
+                        logger.info("start local message dispatcher trhread");
+                        try {
+                            LocalMessageProducer localMessageProducer = new LocalMessageProducer();
+
+                        } catch (JMSException e) {
+                            logger.error(e.getMessage());
+                        }
+                    }
+                }, "Local message dispatcher thread");
+                logger.info("loop started, wait for a message");
 
                 while (isRunning && !Thread.interrupted()) {
                     if (errorConsumer.isPresent() && remoteProducer.isPresent()) {
@@ -81,28 +127,28 @@ public class RemoteLogger implements Runnable, ExceptionListener {
 
                     } else {
                         Thread.sleep(SLEEP_TIME);
-                        localLogger.info("errorConsumer or remoteProducer is not present");
+                        logger.info("errorConsumer or remoteProducer is not present");
                     }
                 }
             }
         } catch (Exception e) {
-            localLogger.error(e.getMessage());
+            logger.error(e.getMessage());
         } finally {
             if (localConnection.isPresent()) {
                 try {
                     localConnection.get().close();
                 } catch (JMSException e) {
-                    localLogger.error(e.getMessage());
+                    logger.error(e.getMessage());
                 }
             }
             if (remoteConnection.isPresent()) {
                 try {
                     remoteConnection.get().close();
                 } catch (JMSException e) {
-                    localLogger.error(e.getMessage());
+                    logger.error(e.getMessage());
                 }
             }
-            localLogger.info("finally");
+            logger.info("finally");
         }
 
     }
@@ -114,7 +160,7 @@ public class RemoteLogger implements Runnable, ExceptionListener {
 
             producer.send(newMessage);
         } else {
-            localLogger.debug("message is not instance of ActiveMQObjectMessage");
+            logger.debug("message is not instance of ActiveMQObjectMessage");
         }
     }
 
@@ -146,7 +192,7 @@ public class RemoteLogger implements Runnable, ExceptionListener {
 
             return Optional.of(localConnection);
         } catch (JMSException e) {
-            localLogger.error(e.getMessage());
+            logger.error(e.getMessage());
         }
 
         return Optional.absent();
@@ -163,7 +209,7 @@ public class RemoteLogger implements Runnable, ExceptionListener {
                 return Optional.of(localSession.createConsumer(localErrorQueue));
             }
         } catch (JMSException e) {
-            localLogger.error(e.getMessage());
+            logger.error(e.getMessage());
         }
 
         return Optional.absent();
@@ -183,23 +229,20 @@ public class RemoteLogger implements Runnable, ExceptionListener {
             }
 
         } catch (JMSException e) {
-            localLogger.error(e.getMessage());
+            logger.error(e.getMessage());
         }
         return Optional.absent();
     }
 
-    private void setupJMSAppenderForLogger() throws JMSException {
-        PersistentJMSAppender jmsAppender = new PersistentJMSAppender(MQSettings.LOCAL_BROKER_URI, MQSettings.LOCAL_ERRORS);
-        jmsAppender.activateOptions();
-        jmsAppender.setName(JMS_APPENDER_NAME);
-        LogManager.getLogger(REMOTE_LOGGER_NAME).addAppender(jmsAppender);
-    }
-
     public synchronized void onException(JMSException exception) {
-        localLogger.error("JMS Exception occured.  Shutting down client." + exception.getMessage());
+        logger.error("JMS Exception occured.  Shutting down client." + exception.getMessage());
     }
 
     public void setRunning(boolean running) {
         isRunning = running;
+    }
+
+    public void enqueue(String hello) {
+        messageQueue.add(hello);
     }
 }

@@ -39,7 +39,13 @@
             <artifactId>tracking-interface</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-
+        <!-- intellij gui builder -->
+        <dependency>
+            <groupId>com.intellij</groupId>
+            <artifactId>forms_rt</artifactId>
+            <version>7.0.3</version>
+        </dependency>
+        <!-- /intellij -->
         <!-- LOG -->
         <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
         <dependency>
@@ -66,7 +72,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
                 <configuration>
-                    <mainClass>com.chemaxon.app.Client</mainClass>
+                    <mainClass>com.chemaxon.app.App</mainClass>
                 </configuration>
             </plugin>
         </plugins>
