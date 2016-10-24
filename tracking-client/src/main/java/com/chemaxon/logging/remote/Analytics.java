@@ -19,12 +19,9 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 
-public class Analytics implements Runnable, ExceptionListener, Analytics.LocalMessageProducerListener {
+public class Analytics implements Runnable, ExceptionListener, LocalMessageProducerListener {
 
     private static final Logger logger = LoggerFactory.getLogger(Analytics.class);
 
@@ -62,17 +59,6 @@ public class Analytics implements Runnable, ExceptionListener, Analytics.LocalMe
 
     }
 
-    private class LocalMessageProducerEvent extends EventObject {
-
-        public LocalMessageProducerEvent(Object o) {
-            super(o);
-        }
-    }
-
-    public interface LocalMessageProducerListener {
-        void received(LocalMessageProducerEvent event);
-    }
-
     public void run() {
         Optional<Connection> localConnection = Optional.absent();
         Optional<Connection> remoteConnection = Optional.absent();
@@ -85,34 +71,7 @@ public class Analytics implements Runnable, ExceptionListener, Analytics.LocalMe
             final Optional<MessageProducer> remoteProducer = getRemoteProducer(remoteConnection);
 
             if (localConnection.isPresent()) {
-                new Thread(new Runnable() {
-                    private final List<LocalMessageProducerListener> listeners = new ArrayList<LocalMessageProducerListener>();
-
-                    public synchronized void addLocalMessageProducerListener(LocalMessageProducerListener localMessageProducerListener) {
-                        listeners.add(localMessageProducerListener);
-                    }
-
-                    public synchronized void removeLocalMessageProducerListener(LocalMessageProducerListener localMessageProducerListener) {
-                        listeners.remove(localMessageProducerListener);
-                    }
-
-                    private synchronized void fireLocalMessageProducerEvent() {
-                        for (LocalMessageProducerListener listener : listeners) {
-                            listener.received(new LocalMessageProducerEvent("started"));
-                        }
-                    }
-
-                    @Override
-                    public void run() {
-                        logger.info("start local message dispatcher trhread");
-                        try {
-                            LocalMessageProducer localMessageProducer = new LocalMessageProducer();
-
-                        } catch (JMSException e) {
-                            logger.error(e.getMessage());
-                        }
-                    }
-                }, "Local message dispatcher thread");
+                new Thread(new MessageDispatcher(), "Local message dispatcher thread");
                 logger.info("loop started, wait for a message");
 
                 while (isRunning && !Thread.interrupted()) {
@@ -245,4 +204,5 @@ public class Analytics implements Runnable, ExceptionListener, Analytics.LocalMe
     public void enqueue(String hello) {
         messageQueue.add(hello);
     }
+
 }
