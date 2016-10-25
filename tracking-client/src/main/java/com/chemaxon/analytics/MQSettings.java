@@ -1,4 +1,4 @@
-package com.chemaxon.logging.remote;
+package com.chemaxon.analytics;
 
 public class MQSettings {
     public static final String LOCAL_BROKER_URI = "vm://test?broker.persistent=true";

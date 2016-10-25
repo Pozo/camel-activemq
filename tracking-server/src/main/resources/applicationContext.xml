@@ -12,7 +12,7 @@
           class="org.apache.activemq.ActiveMQConnectionFactory">
         <property name="brokerURL" value="tcp://localhost:61616"/>
     </bean>
-    <bean id="customBeans" class="com.chemaxon.logging.remote.ErrorLogger"></bean>
+    <bean id="customBeans" class="com.chemaxon.analytics.ReportDispatcher"></bean>
     <bean id="pooledConnectionFactory"
           class="org.apache.activemq.pool.PooledConnectionFactory" init-method="start" destroy-method="stop">
         <property name="maxConnections" value="8"/>

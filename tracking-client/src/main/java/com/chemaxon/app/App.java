@@ -1,7 +1,6 @@
 package com.chemaxon.app;
 
-import com.chemaxon.logging.remote.Analytics;
-import com.chemaxon.logging.remote.transfer.ErrorReport;
+import com.chemaxon.analytics.Analytics;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
@@ -17,46 +16,35 @@ import java.io.File;
 import java.util.UUID;
 
 public class App extends JDialog {
+    private Analytics analytics;
     private JPanel contentPane;
     private JButton buttonOK;
     private JButton buttonCancel;
     private JTextArea textArea1;
 
     public static void main(String[] args) {
-        initializeRemoteLogging();
-
         App dialog = new App();
         dialog.pack();
         dialog.setVisible(true);
         System.exit(0);
     }
 
-    private static void initializeRemoteLogging() {
+    private void initializeAnalytics() {
         String userDir = System.getProperty("user.dir");
-        System.setProperty("org.apache.activemq.default.directory.prefix", userDir + File.separator);
-        System.out.println("userDir = " + userDir);
         final String clientId = "client id";
         final String sessionId = UUID.randomUUID().toString();
 
-        Analytics analytics = Analytics.builder()
+        analytics = Analytics.builder()
+                .setLocalStorageFolder(userDir + File.separator)
                 .setClientId(clientId)
                 .setSessionId(sessionId)
                 .build();
-
-        analytics.enqueue("hello");
-
-        final Thread loggerThread = Analytics.start(clientId, sessionId);
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                loggerThread.interrupt();
-            }
-        });
+        analytics.start();
     }
 
     public App() {
+        initializeAnalytics();
+
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
@@ -90,6 +78,7 @@ public class App extends JDialog {
     }
 
     private void onOK() {
+        analytics.enqueue("coool");
     }
 
     private void onCancel() {

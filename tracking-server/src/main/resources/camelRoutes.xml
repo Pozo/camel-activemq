@@ -9,7 +9,7 @@
     <camelContext id="marvin.queues" xmlns="http://camel.apache.org/schema/spring">
         <route>
             <from uri="activemq:REMOTE.ERRORS"/>
-            <to uri="bean:com.chemaxon.logging.remote.ErrorLogger?method=log"/>
+            <to uri="bean:com.chemaxon.analytics.ReportDispatcher?method=dispatch"/>
         </route>
     </camelContext>
 </beans>

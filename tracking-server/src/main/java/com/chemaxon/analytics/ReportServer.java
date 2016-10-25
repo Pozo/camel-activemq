@@ -1,13 +1,12 @@
-package com.chemaxon.logging.remote;
+package com.chemaxon.analytics;
 
-import org.apache.camel.CamelContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class ServerBroker {
-    private static final Logger logger = LoggerFactory.getLogger(ServerBroker.class);
+public class ReportServer {
+    private static final Logger logger = LoggerFactory.getLogger(ReportServer.class);
 
     private static final int SLEEP = 3000;
     private static boolean listening = true;

@@ -1,11 +1,12 @@
-package com.chemaxon.logging.remote;
+package com.chemaxon.analytics;
 
-import com.chemaxon.logging.remote.transfer.ErrorReport;
-import com.chemaxon.logging.remote.transfer.ErrorReportBuilder;
+import com.chemaxon.analytics.message.MessageDispatcher;
+import com.chemaxon.analytics.transfer.Report;
+import com.chemaxon.analytics.transfer.ReportBuilder;
 import com.google.common.base.Optional;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.command.ActiveMQObjectMessage;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.activemq.command.ActiveMQTextMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,43 +20,43 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
-import java.util.concurrent.SynchronousQueue;
 
-public class Analytics implements Runnable, ExceptionListener, LocalMessageProducerListener {
+public class Analytics implements Runnable, ExceptionListener {
 
     private static final Logger logger = LoggerFactory.getLogger(Analytics.class);
 
     private static final int SLEEP_TIME = 3000;
 
-    private final SynchronousQueue<String> messageQueue = new SynchronousQueue<String>();
-
-
     private final String clientId;
     private final String sessionId;
 
+    private final MessageDispatcher messageDispatcher;
+
     private boolean isRunning = true;
 
-    Analytics(String clientId, String sessionId) {
+    Analytics(String clientId, String sessionId, String localStorageLocation) {
         this.clientId = clientId;
         this.sessionId = sessionId;
+        System.setProperty("org.apache.activemq.default.directory.prefix", localStorageLocation);
+
+        this.messageDispatcher = new MessageDispatcher();
     }
 
     public static AnalyticsBuilder builder() {
         return new AnalyticsBuilder();
     }
 
-    public static Thread start(String clientId, String sessionId) {
-        final Analytics analytics = new AnalyticsBuilder().setClientId(clientId).setSessionId(sessionId).build();
-
-        Thread loggerThread = new Thread(analytics, "Analytics main thread");
+    public void start() {
+        final Thread loggerThread = new Thread(this, "Analytics main thread");
         loggerThread.setDaemon(false);
         loggerThread.start();
-
-        return loggerThread;
-    }
-
-    @Override
-    public void received(LocalMessageProducerEvent event) {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                loggerThread.interrupt();
+            }
+        });
 
     }
 
@@ -71,7 +72,8 @@ public class Analytics implements Runnable, ExceptionListener, LocalMessageProdu
             final Optional<MessageProducer> remoteProducer = getRemoteProducer(remoteConnection);
 
             if (localConnection.isPresent()) {
-                new Thread(new MessageDispatcher(), "Local message dispatcher thread");
+                final Thread messageDispatcherThread = new Thread(messageDispatcher, "Local message dispatcher thread");
+                messageDispatcherThread.start();
                 logger.info("loop started, wait for a message");
 
                 while (isRunning && !Thread.interrupted()) {
@@ -92,6 +94,7 @@ public class Analytics implements Runnable, ExceptionListener, LocalMessageProdu
             }
         } catch (Exception e) {
             logger.error(e.getMessage());
+            // we have to enqueue the failed message again in order to resend it when the client try to reconnect
         } finally {
             if (localConnection.isPresent()) {
                 try {
@@ -109,37 +112,36 @@ public class Analytics implements Runnable, ExceptionListener, LocalMessageProdu
             }
             logger.info("finally");
         }
-
     }
 
     private void produceMessage(Message message, MessageProducer producer) throws JMSException {
-        if (message instanceof ActiveMQObjectMessage) {
-            final ActiveMQObjectMessage originalmessage = (ActiveMQObjectMessage) message;
-            ActiveMQObjectMessage newMessage = copyOriginalMessageAndInitialize(originalmessage);
+        if (message instanceof ActiveMQTextMessage) {
+            final ActiveMQTextMessage originalmessage = (ActiveMQTextMessage) message;
+            ActiveMQObjectMessage newMessage = cloneOriginalMessage(originalmessage);
 
             producer.send(newMessage);
         } else {
-            logger.debug("message is not instance of ActiveMQObjectMessage");
+            logger.debug("message is not instance of ActiveMQTextMessage");
         }
     }
 
-    private ActiveMQObjectMessage copyOriginalMessageAndInitialize(ActiveMQObjectMessage originalMessage) throws JMSException {
-        final LoggingEvent loggingEvent = (LoggingEvent) originalMessage.getObject();
-        final ErrorReport errorReport = getErrorReport(loggingEvent);
+    private ActiveMQObjectMessage cloneOriginalMessage(ActiveMQTextMessage originalMessage) throws JMSException {
+        final String message = originalMessage.getText();
+        final Report report = getReport(message);
 
         ActiveMQObjectMessage newMessage = new ActiveMQObjectMessage();
-        newMessage.setObject(errorReport);
+        newMessage.setObject(report);
 
         return newMessage;
     }
 
-    private ErrorReport getErrorReport(LoggingEvent loggingEvent) {
-        final ErrorReportBuilder errorReportBuilder = new ErrorReportBuilder()
+    private Report getReport(String message) {
+        final ReportBuilder reportBuilder = Report.builder()
                 .setClientId(clientId)
                 .setSessionId(sessionId)
-                .setLoggingEvent(loggingEvent);
+                .setMessage(message);
 
-        return errorReportBuilder.createShare();
+        return reportBuilder.createShare();
     }
 
     private Optional<Connection> configureAndStartConnection(String localBroker) {
@@ -201,8 +203,8 @@ public class Analytics implements Runnable, ExceptionListener, LocalMessageProdu
         isRunning = running;
     }
 
-    public void enqueue(String hello) {
-        messageQueue.add(hello);
+    public void enqueue(String message) {
+        messageDispatcher.enqueue(message);
     }
 
 }
