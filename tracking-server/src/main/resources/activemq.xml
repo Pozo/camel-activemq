@@ -8,7 +8,7 @@
 
     <broker brokerName="mainBroker" xmlns="http://activemq.apache.org/schema/core">
         <transportConnectors>
-            <transportConnector name="transport" uri="tcp://localhost:61616"/>
+            <transportConnector name="transport" uri="nio://localhost:61616"/>
         </transportConnectors>
         <!--destinationPolicy>
             <policyMap>
