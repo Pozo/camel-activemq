@@ -20,6 +20,7 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
+import java.io.File;
 
 public class Analytics implements Runnable, ExceptionListener {
 
@@ -29,17 +30,31 @@ public class Analytics implements Runnable, ExceptionListener {
 
     private final String clientId;
     private final String sessionId;
+    private final int reconnectDelayInSeconds;
+    private final int maxReconnectAttempts;
 
     private final MessageDispatcher messageDispatcher;
 
     private boolean isRunning = true;
 
-    Analytics(String clientId, String sessionId, String localStorageLocation) {
+    Analytics(String clientId, String sessionId, String localStorageLocation, int reconnectDelayInSeconds, int maxReconnectAttempts) {
         this.clientId = clientId;
         this.sessionId = sessionId;
-        System.setProperty("org.apache.activemq.default.directory.prefix", localStorageLocation);
+        this.reconnectDelayInSeconds = reconnectDelayInSeconds;
+        this.maxReconnectAttempts = maxReconnectAttempts;
+        setLocalStorageLocation(localStorageLocation);
 
         this.messageDispatcher = new MessageDispatcher();
+    }
+
+    private void setLocalStorageLocation(String localStorageLocation) {
+        File localStorage = new File(localStorageLocation);
+
+        if(localStorage.exists()) {
+            System.setProperty("org.apache.activemq.default.directory.prefix", localStorageLocation);
+        } else {
+            logger.warn("localStorageLocation location : " + localStorageLocation + " does not exists");
+        }
     }
 
     public static AnalyticsBuilder builder() {
@@ -65,8 +80,8 @@ public class Analytics implements Runnable, ExceptionListener {
         Optional<Connection> remoteConnection = Optional.absent();
 
         try {
-            localConnection = configureAndStartConnection(MQSettings.LOCAL_BROKER_URI);
-            remoteConnection = configureAndStartConnection(MQSettings.REMOTE_BROKER_URI);
+            localConnection = configureAndStartConnection(MQSettings.getLocalBrokerUri());
+            remoteConnection = configureAndStartConnection(MQSettings.getRemoteBrokerUri(reconnectDelayInSeconds,maxReconnectAttempts));
 
             final Optional<MessageConsumer> errorConsumer = getLocalConsumer(localConnection);
             final Optional<MessageProducer> remoteProducer = getRemoteProducer(remoteConnection);

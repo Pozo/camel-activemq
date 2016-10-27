@@ -22,7 +22,7 @@ public class LocalMessageProducer {
 
     public void initialize() throws JMSException {
         // Create a ConnectionFactory
-        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(MQSettings.LOCAL_BROKER_URI);
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(MQSettings.getLocalBrokerUri());
 
         // Create a Connection
         Connection localConnection = connectionFactory.createConnection();

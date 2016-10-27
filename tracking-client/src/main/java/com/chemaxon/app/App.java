@@ -36,6 +36,7 @@ public class App extends JDialog {
 
         analytics = Analytics.builder()
                 .setLocalStorageFolder(userDir + File.separator)
+                .setReconnectDelayInSeconds(5)
                 .setClientId(clientId)
                 .setSessionId(sessionId)
                 .build();
