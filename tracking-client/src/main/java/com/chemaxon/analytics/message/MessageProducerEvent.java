@@ -4,9 +4,9 @@ import com.chemaxon.analytics.ProducerEvent;
 
 import java.util.EventObject;
 
-class LocalMessageProducerEvent extends EventObject {
+class MessageProducerEvent extends EventObject {
 
-    LocalMessageProducerEvent(ProducerEvent producerEvent) {
+    MessageProducerEvent(ProducerEvent producerEvent) {
         super(producerEvent);
     }
 

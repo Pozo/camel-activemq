@@ -1,6 +1,6 @@
 package com.chemaxon.analytics;
 
-import com.chemaxon.analytics.transfer.Report;
+import com.chemaxon.analytics.transfer.Message;
 import org.apache.camel.Body;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,9 +8,10 @@ import org.slf4j.LoggerFactory;
 public class ReportDispatcher {
     private static final Logger logger = LoggerFactory.getLogger(ReportDispatcher.class);
 
-    public void dispatch(@Body Report report) {
-        logger.info(report.getClientId());
-        logger.info(report.getSessionId());
-        logger.info(report.getMessage());
+    // this method runs concurrently!
+    public void dispatch(@Body Message<String> message) {
+        logger.info(message.getClientId());
+        logger.info(message.getSessionId());
+        logger.info(message.getMessage());
     }
 }

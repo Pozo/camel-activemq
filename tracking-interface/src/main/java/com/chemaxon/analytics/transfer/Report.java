@@ -2,7 +2,7 @@ package com.chemaxon.analytics.transfer;
 
 import java.io.Serializable;
 
-public class Report implements Serializable {
+public class Report implements Serializable, Message<String> {
     private final String message;
     private final String clientId;
     private final String sessionId;

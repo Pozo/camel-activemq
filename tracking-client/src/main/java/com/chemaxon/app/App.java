@@ -34,7 +34,7 @@ public class App extends JDialog {
         final String clientId = "client id";
         final String sessionId = UUID.randomUUID().toString();
 
-        analytics = Analytics.builder()
+        analytics = Analytics.builderFor("localhost", 61616)
                 .setLocalStorageFolder(userDir + File.separator)
                 .setReconnectDelayInSeconds(5)
                 .setClientId(clientId)
@@ -78,8 +78,9 @@ public class App extends JDialog {
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
+    private static int i = 0;
     private void onOK() {
-        analytics.enqueue("coool");
+        analytics.enqueue("coool" + (i++));
     }
 
     private void onCancel() {

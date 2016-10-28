@@ -15,14 +15,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalMessageProducer {
-    private final List<LocalMessageProducerListener> listeners = new ArrayList<LocalMessageProducerListener>();
+    private final List<MessageProducerListener> listeners = new ArrayList<MessageProducerListener>();
 
     private Session session;
     private MessageProducer producer;
 
+    private final MQSettings mqSettings;
+
+    public LocalMessageProducer(MQSettings mqSettings) {
+        this.mqSettings = mqSettings;
+    }
+
     public void initialize() throws JMSException {
         // Create a ConnectionFactory
-        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(MQSettings.getLocalBrokerUri());
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(mqSettings.getLocalBrokerUri());
 
         // Create a Connection
         Connection localConnection = connectionFactory.createConnection();
@@ -48,16 +54,15 @@ public class LocalMessageProducer {
         } catch (JMSException e) {
             e.printStackTrace();
         }
-
     }
 
-    public synchronized void addLocalMessageProducerListener(LocalMessageProducerListener localMessageProducerListener) {
-        listeners.add(localMessageProducerListener);
+    public synchronized void addLocalMessageProducerListener(MessageProducerListener messageProducerListener) {
+        listeners.add(messageProducerListener);
     }
 
     private synchronized void fireEvent(ProducerEvent event) {
-        for (LocalMessageProducerListener listener : listeners) {
-            listener.received(new LocalMessageProducerEvent(event));
+        for (MessageProducerListener listener : listeners) {
+            listener.received(new MessageProducerEvent(event));
         }
     }
 }

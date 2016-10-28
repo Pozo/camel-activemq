@@ -1,11 +1,27 @@
 package com.chemaxon.analytics;
 
+import com.chemaxon.analytics.message.ReportMessageFiller;
+
 public class AnalyticsBuilder {
+    private final String serverHostName;
+    private final int serverPortNumber;
+
     private String clientId;
     private String sessionId;
     private String localStorageFolder;
     private int reconnectDelayInSeconds;
     private int maxReconnectAttempts;
+
+    AnalyticsBuilder(String serverHostName, int serverPortNumber) {
+        if(serverHostName == null) {
+            throw new IllegalArgumentException("serverHostName cant be null");
+        }
+        if(serverPortNumber == 0) {
+            throw new IllegalArgumentException("serverPortNumber cant be null");
+        }
+        this.serverHostName = serverHostName;
+        this.serverPortNumber = serverPortNumber;
+    }
 
     public AnalyticsBuilder setClientId(String clientId) {
         this.clientId = clientId;
@@ -18,7 +34,13 @@ public class AnalyticsBuilder {
     }
 
     public Analytics build() {
-        return new Analytics(clientId, sessionId, localStorageFolder,reconnectDelayInSeconds,maxReconnectAttempts);
+        final MQSettings mqSettings = new MQSettings(serverHostName, serverPortNumber);
+        mqSettings.setMaxReconnectAttempts(maxReconnectAttempts);
+        mqSettings.setReconnectDelayInSeconds(reconnectDelayInSeconds);
+
+        ReportMessageFiller reportMessageFiller = new ReportMessageFiller(clientId,sessionId);
+
+        return new Analytics(mqSettings,reportMessageFiller, localStorageFolder);
     }
 
     public AnalyticsBuilder setLocalStorageFolder(String localStorageFolder) {

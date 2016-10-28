@@ -7,24 +7,15 @@
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
 
     <broker brokerName="mainBroker" xmlns="http://activemq.apache.org/schema/core">
+
         <transportConnectors>
             <transportConnector name="transport" uri="nio://localhost:61616"/>
         </transportConnectors>
-        <!--destinationPolicy>
-            <policyMap>
-                <policyEntries>
-                    <policyEntry queue="TEST.>" allConsumersExclusiveByDefault="true"/>
-                </policyEntries>
-            </policyMap>
-        </destinationPolicy-->
+
         <persistenceAdapter>
             <memoryPersistenceAdapter/>
         </persistenceAdapter>
-        <!--destinations>
-            <queue physicalName="TEST.QUEUE1"/>
-            <queue physicalName="TEST.QUEUE2"/>
-            <queue physicalName="TEST.QUEUE3"/>
-        </destinations-->
+
     </broker>
 
 </beans>

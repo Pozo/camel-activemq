@@ -1,8 +1,8 @@
 package com.chemaxon.analytics;
 
 import com.chemaxon.analytics.message.MessageDispatcher;
+import com.chemaxon.analytics.message.ReportMessageFiller;
 import com.chemaxon.analytics.transfer.Report;
-import com.chemaxon.analytics.transfer.ReportBuilder;
 import com.google.common.base.Optional;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.command.ActiveMQObjectMessage;
@@ -21,6 +21,7 @@ import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Analytics implements Runnable, ExceptionListener {
 
@@ -28,37 +29,34 @@ public class Analytics implements Runnable, ExceptionListener {
 
     private static final int SLEEP_TIME = 3000;
 
-    private final String clientId;
-    private final String sessionId;
-    private final int reconnectDelayInSeconds;
-    private final int maxReconnectAttempts;
+    private final MQSettings mqSettings;
 
     private final MessageDispatcher messageDispatcher;
+    private final ReportMessageFiller reportMessageFiller;
 
-    private boolean isRunning = true;
+    private final AtomicBoolean isRunning = new AtomicBoolean(true);
 
-    Analytics(String clientId, String sessionId, String localStorageLocation, int reconnectDelayInSeconds, int maxReconnectAttempts) {
-        this.clientId = clientId;
-        this.sessionId = sessionId;
-        this.reconnectDelayInSeconds = reconnectDelayInSeconds;
-        this.maxReconnectAttempts = maxReconnectAttempts;
+    Analytics(MQSettings mqSettings, ReportMessageFiller reportMessageFiller, String localStorageLocation) {
+        this.mqSettings = mqSettings;
+        this.reportMessageFiller = reportMessageFiller;
+
         setLocalStorageLocation(localStorageLocation);
 
-        this.messageDispatcher = new MessageDispatcher();
+        this.messageDispatcher = new MessageDispatcher(mqSettings);
     }
 
     private void setLocalStorageLocation(String localStorageLocation) {
         File localStorage = new File(localStorageLocation);
 
-        if(localStorage.exists()) {
+        if (localStorage.exists()) {
             System.setProperty("org.apache.activemq.default.directory.prefix", localStorageLocation);
         } else {
             logger.warn("localStorageLocation location : " + localStorageLocation + " does not exists");
         }
     }
 
-    public static AnalyticsBuilder builder() {
-        return new AnalyticsBuilder();
+    public static AnalyticsBuilder builderFor(String hostName, int portNumber) {
+        return new AnalyticsBuilder(hostName,portNumber);
     }
 
     public void start() {
@@ -68,8 +66,7 @@ public class Analytics implements Runnable, ExceptionListener {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                super.run();
-                loggerThread.interrupt();
+                setRunning(false);
             }
         });
 
@@ -80,18 +77,23 @@ public class Analytics implements Runnable, ExceptionListener {
         Optional<Connection> remoteConnection = Optional.absent();
 
         try {
-            localConnection = configureAndStartConnection(MQSettings.getLocalBrokerUri());
-            remoteConnection = configureAndStartConnection(MQSettings.getRemoteBrokerUri(reconnectDelayInSeconds,maxReconnectAttempts));
-
-            final Optional<MessageConsumer> errorConsumer = getLocalConsumer(localConnection);
-            final Optional<MessageProducer> remoteProducer = getRemoteProducer(remoteConnection);
-
+            localConnection = configureAndStartConnection(mqSettings.getLocalBrokerUri());
             if (localConnection.isPresent()) {
                 final Thread messageDispatcherThread = new Thread(messageDispatcher, "Local message dispatcher thread");
                 messageDispatcherThread.start();
+                logger.info("Local message dispatcher has started");
+            }
+
+            remoteConnection = configureAndStartConnection(mqSettings.getRemoteBrokerUri());
+
+            final Optional<MessageConsumer> errorConsumer = getLocalConsumer(localConnection);
+            final Optional<MessageProducer> remoteProducer = getRemoteProducer(remoteConnection);
+            logger.info("remoteProducer is present " + localConnection.isPresent());
+
+            if (localConnection.isPresent()) {
                 logger.info("loop started, wait for a message");
 
-                while (isRunning && !Thread.interrupted()) {
+                while (isRunning.get() && !Thread.currentThread().isInterrupted()) {
                     if (errorConsumer.isPresent() && remoteProducer.isPresent()) {
                         final MessageConsumer messageConsumer = errorConsumer.get();
                         final Message message = messageConsumer.receive();
@@ -109,6 +111,7 @@ public class Analytics implements Runnable, ExceptionListener {
             }
         } catch (Exception e) {
             logger.error(e.getMessage());
+            e.printStackTrace();
             // we have to enqueue the failed message again in order to resend it when the client try to reconnect
         } finally {
             if (localConnection.isPresent()) {
@@ -142,21 +145,12 @@ public class Analytics implements Runnable, ExceptionListener {
 
     private ActiveMQObjectMessage cloneOriginalMessage(ActiveMQTextMessage originalMessage) throws JMSException {
         final String message = originalMessage.getText();
-        final Report report = getReport(message);
+        final Report report = reportMessageFiller.fillMessage(message);
 
         ActiveMQObjectMessage newMessage = new ActiveMQObjectMessage();
         newMessage.setObject(report);
 
         return newMessage;
-    }
-
-    private Report getReport(String message) {
-        final ReportBuilder reportBuilder = Report.builder()
-                .setClientId(clientId)
-                .setSessionId(sessionId)
-                .setMessage(message);
-
-        return reportBuilder.createShare();
     }
 
     private Optional<Connection> configureAndStartConnection(String localBroker) {
@@ -215,7 +209,7 @@ public class Analytics implements Runnable, ExceptionListener {
     }
 
     public void setRunning(boolean running) {
-        isRunning = running;
+        isRunning.set(running);
     }
 
     public void enqueue(String message) {

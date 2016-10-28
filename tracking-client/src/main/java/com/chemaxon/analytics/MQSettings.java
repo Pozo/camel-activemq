@@ -2,15 +2,28 @@ package com.chemaxon.analytics;
 
 public class MQSettings {
     private static final String LOCAL_BROKER_URI = "vm://test?broker.persistent=true";
-    private static final String REMOTE_BROKER_URI = "failover:(nio://localhost:61616)";
+    private static final String REMOTE_BROKER_URI_TEMPLATE = "failover:(nio://%s:%d)";
 
     public static final String LOCAL_ERRORS = "LOCAL.ERRORS";
     public static final String LOCAL_USAGE = "LOCAL.USAGE";
 
     public static final String REMOTE_ERRORS = "REMOTE.ERRORS";
 
-    public static String getRemoteBrokerUri(int reconnectDelayInSeconds, int maxReconnectAttempts) {
-        final StringBuilder remoteUri = new StringBuilder(REMOTE_BROKER_URI);
+    private final String host;
+    private final int port;
+
+    private int reconnectDelayInSeconds;
+    private int maxReconnectAttempts;
+
+    MQSettings(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
+
+    public String getRemoteBrokerUri() {
+        final String remoteHostBase = String.format(REMOTE_BROKER_URI_TEMPLATE,host,port);
+        final StringBuilder remoteUri = new StringBuilder(remoteHostBase);
+
         if (reconnectDelayInSeconds != 0) {
             remoteUri.append("?maxReconnectDelay=");
             final int delayInMiliseconds = reconnectDelayInSeconds * 1000;
@@ -23,7 +36,15 @@ public class MQSettings {
         return remoteUri.toString();
     }
 
-    public static String getLocalBrokerUri() {
+    public String getLocalBrokerUri() {
         return LOCAL_BROKER_URI;
+    }
+
+    public void setReconnectDelayInSeconds(int reconnectDelayInSeconds) {
+        this.reconnectDelayInSeconds = reconnectDelayInSeconds;
+    }
+
+    public void setMaxReconnectAttempts(int maxReconnectAttempts) {
+        this.maxReconnectAttempts = maxReconnectAttempts;
     }
 }
