@@ -1,7 +1,7 @@
-package com.chemaxon.analytics.message;
+package com.github.pozo.analytics.message;
 
-import com.chemaxon.analytics.MQSettings;
-import com.chemaxon.analytics.ProducerEvent;
+import com.github.pozo.analytics.MQSettings;
+import com.github.pozo.analytics.ProducerEvent;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.Connection;
@@ -16,11 +16,9 @@ import java.util.List;
 
 public class LocalMessageProducer {
     private final List<MessageProducerListener> listeners = new ArrayList<MessageProducerListener>();
-
+    private final MQSettings mqSettings;
     private Session session;
     private MessageProducer producer;
-
-    private final MQSettings mqSettings;
 
     public LocalMessageProducer(MQSettings mqSettings) {
         this.mqSettings = mqSettings;

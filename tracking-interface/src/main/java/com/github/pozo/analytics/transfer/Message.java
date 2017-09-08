@@ -1,4 +1,4 @@
-package com.chemaxon.analytics.transfer;
+package com.github.pozo.analytics.transfer;
 
 public interface Message<T> {
     T getMessage();

@@ -1,7 +1,7 @@
-package com.chemaxon.analytics.message;
+package com.github.pozo.analytics.message;
 
-import com.chemaxon.analytics.transfer.Report;
-import com.chemaxon.analytics.transfer.ReportBuilder;
+import com.github.pozo.analytics.transfer.Report;
+import com.github.pozo.analytics.transfer.ReportBuilder;
 
 public class ReportMessageFiller implements MessageFiller<String, Report> {
     private final String clientId;
@@ -11,6 +11,7 @@ public class ReportMessageFiller implements MessageFiller<String, Report> {
         this.clientId = clientId;
         this.sessionId = sessionId;
     }
+
     @Override
     public Report fillMessage(String message) {
         final ReportBuilder reportBuilder = Report.builder()

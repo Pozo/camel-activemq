@@ -1,6 +1,6 @@
-package com.chemaxon.analytics.message;
+package com.github.pozo.analytics.message;
 
-import com.chemaxon.analytics.ProducerEvent;
+import com.github.pozo.analytics.ProducerEvent;
 
 import java.util.EventObject;
 

@@ -1,13 +1,12 @@
-package com.chemaxon.analytics.message;
+package com.github.pozo.analytics.message;
 
-import com.chemaxon.analytics.MQSettings;
-import com.chemaxon.analytics.ProducerEvent;
+import com.github.pozo.analytics.MQSettings;
+import com.github.pozo.analytics.ProducerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 import java.util.LinkedList;
-import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MessageDispatcher implements Runnable, MessageProducerListener {
@@ -15,9 +14,8 @@ public class MessageDispatcher implements Runnable, MessageProducerListener {
 
     private final LinkedList<String> messageQueue = new LinkedList<String>();
     private final AtomicBoolean localMessageProducerStarted = new AtomicBoolean(false);
-    private LocalMessageProducer localMessageProducer;
-
     private final MQSettings mqSettings;
+    private LocalMessageProducer localMessageProducer;
 
     public MessageDispatcher(MQSettings mqSettings) {
         this.mqSettings = mqSettings;
@@ -59,7 +57,7 @@ public class MessageDispatcher implements Runnable, MessageProducerListener {
 
     private void sendEverythingFromTheMessageQueue() {
         synchronized (localMessageProducerStarted) {
-            while(messageQueue.size()>0) {
+            while (messageQueue.size() > 0) {
                 localMessageProducer.send(messageQueue.removeFirst());
             }
 

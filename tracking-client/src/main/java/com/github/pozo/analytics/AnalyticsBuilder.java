@@ -1,6 +1,6 @@
-package com.chemaxon.analytics;
+package com.github.pozo.analytics;
 
-import com.chemaxon.analytics.message.ReportMessageFiller;
+import com.github.pozo.analytics.message.ReportMessageFiller;
 
 public class AnalyticsBuilder {
     private final String serverHostName;
@@ -13,10 +13,10 @@ public class AnalyticsBuilder {
     private int maxReconnectAttempts;
 
     AnalyticsBuilder(String serverHostName, int serverPortNumber) {
-        if(serverHostName == null) {
+        if (serverHostName == null) {
             throw new IllegalArgumentException("serverHostName cant be null");
         }
-        if(serverPortNumber == 0) {
+        if (serverPortNumber == 0) {
             throw new IllegalArgumentException("serverPortNumber cant be null");
         }
         this.serverHostName = serverHostName;
@@ -38,9 +38,9 @@ public class AnalyticsBuilder {
         mqSettings.setMaxReconnectAttempts(maxReconnectAttempts);
         mqSettings.setReconnectDelayInSeconds(reconnectDelayInSeconds);
 
-        ReportMessageFiller reportMessageFiller = new ReportMessageFiller(clientId,sessionId);
+        ReportMessageFiller reportMessageFiller = new ReportMessageFiller(clientId, sessionId);
 
-        return new Analytics(mqSettings,reportMessageFiller, localStorageFolder);
+        return new Analytics(mqSettings, reportMessageFiller, localStorageFolder);
     }
 
     public AnalyticsBuilder setLocalStorageFolder(String localStorageFolder) {

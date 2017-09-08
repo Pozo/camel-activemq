@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>tracking-client-remotely</artifactId>
-        <groupId>com.chemaxon</groupId>
+        <groupId>com.github.pozo</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -114,7 +114,7 @@
             <version>1.7.12</version>
         </dependency>
         <dependency>
-            <groupId>com.chemaxon</groupId>
+            <groupId>com.github.pozo</groupId>
             <artifactId>tracking-interface</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
@@ -137,7 +137,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
                 <configuration>
-                    <mainClass>com.chemaxon.analytics.ReportServer</mainClass>
+                    <mainClass>com.github.pozo.analytics.ReportServer</mainClass>
                 </configuration>
             </plugin>
         </plugins>

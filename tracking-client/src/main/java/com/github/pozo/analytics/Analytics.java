@@ -1,8 +1,8 @@
-package com.chemaxon.analytics;
+package com.github.pozo.analytics;
 
-import com.chemaxon.analytics.message.MessageDispatcher;
-import com.chemaxon.analytics.message.ReportMessageFiller;
-import com.chemaxon.analytics.transfer.Report;
+import com.github.pozo.analytics.message.MessageDispatcher;
+import com.github.pozo.analytics.message.ReportMessageFiller;
+import com.github.pozo.analytics.transfer.Report;
 import com.google.common.base.Optional;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.command.ActiveMQObjectMessage;
@@ -45,6 +45,10 @@ public class Analytics implements Runnable, ExceptionListener {
         this.messageDispatcher = new MessageDispatcher(mqSettings);
     }
 
+    public static AnalyticsBuilder builderFor(String hostName, int portNumber) {
+        return new AnalyticsBuilder(hostName, portNumber);
+    }
+
     private void setLocalStorageLocation(String localStorageLocation) {
         File localStorage = new File(localStorageLocation);
 
@@ -53,10 +57,6 @@ public class Analytics implements Runnable, ExceptionListener {
         } else {
             logger.warn("localStorageLocation location : " + localStorageLocation + " does not exists");
         }
-    }
-
-    public static AnalyticsBuilder builderFor(String hostName, int portNumber) {
-        return new AnalyticsBuilder(hostName,portNumber);
     }
 
     public void start() {

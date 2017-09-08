@@ -1,6 +1,6 @@
-package com.chemaxon.analytics;
+package com.github.pozo.analytics;
 
-import com.chemaxon.analytics.transfer.Message;
+import com.github.pozo.analytics.transfer.Message;
 import org.apache.camel.Body;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

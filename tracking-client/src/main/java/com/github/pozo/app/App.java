@@ -1,12 +1,18 @@
-package com.chemaxon.app;
+package com.github.pozo.app;
 
-import com.chemaxon.analytics.Analytics;
+import com.github.pozo.analytics.Analytics;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -16,32 +22,12 @@ import java.io.File;
 import java.util.UUID;
 
 public class App extends JDialog {
+    private static int i = 0;
     private Analytics analytics;
     private JPanel contentPane;
     private JButton buttonOK;
     private JButton buttonCancel;
     private JTextArea textArea1;
-
-    public static void main(String[] args) {
-        App dialog = new App();
-        dialog.pack();
-        dialog.setVisible(true);
-        System.exit(0);
-    }
-
-    private void initializeAnalytics() {
-        String userDir = System.getProperty("user.dir");
-        final String clientId = "client id";
-        final String sessionId = UUID.randomUUID().toString();
-
-        analytics = Analytics.builderFor("localhost", 61616)
-                .setLocalStorageFolder(userDir + File.separator)
-                .setReconnectDelayInSeconds(5)
-                .setClientId(clientId)
-                .setSessionId(sessionId)
-                .build();
-        analytics.start();
-    }
 
     public App() {
         initializeAnalytics();
@@ -78,7 +64,27 @@ public class App extends JDialog {
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
-    private static int i = 0;
+    public static void main(String[] args) {
+        App dialog = new App();
+        dialog.pack();
+        dialog.setVisible(true);
+        System.exit(0);
+    }
+
+    private void initializeAnalytics() {
+        String userDir = System.getProperty("user.dir");
+        final String clientId = "client id";
+        final String sessionId = UUID.randomUUID().toString();
+
+        analytics = Analytics.builderFor("localhost", 61616)
+                .setLocalStorageFolder(userDir + File.separator)
+                .setReconnectDelayInSeconds(5)
+                .setClientId(clientId)
+                .setSessionId(sessionId)
+                .build();
+        analytics.start();
+    }
+
     private void onOK() {
         analytics.enqueue("coool" + (i++));
     }

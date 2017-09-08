@@ -6,10 +6,10 @@
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
         http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd
        ">
-    <camelContext id="marvin.queues" xmlns="http://camel.apache.org/schema/spring">
+    <camelContext id="report.queues" xmlns="http://camel.apache.org/schema/spring">
         <route>
             <from uri="activemq:REMOTE.ERRORS"/>
-            <to uri="bean:com.chemaxon.analytics.ReportDispatcher?method=dispatch"/>
+            <to uri="bean:com.github.pozo.analytics.ReportDispatcher?method=dispatch"/>
         </route>
     </camelContext>
 </beans>

@@ -1,4 +1,4 @@
-package com.chemaxon.analytics.transfer;
+package com.github.pozo.analytics.transfer;
 
 import java.io.Serializable;
 
@@ -12,9 +12,11 @@ public class Report implements Serializable, Message<String> {
         this.clientId = clientId;
         this.sessionId = sessionId;
     }
+
     public static ReportBuilder builder() {
         return new ReportBuilder();
     }
+
     public String getMessage() {
         return message;
     }

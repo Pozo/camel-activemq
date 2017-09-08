@@ -1,4 +1,4 @@
-package com.chemaxon.analytics.transfer;
+package com.github.pozo.analytics.transfer;
 
 public class ReportBuilder {
     private String message;

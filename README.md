@@ -1,7 +1,9 @@
 ## What is it?
-A fail safe point-to-point message delivery solution. It uses Apache Camel and Apache ActiveMQ.
+An example fail safe point-to-point message delivery setup. It uses Apache Camel and Apache ActiveMQ.
 
 Send messages to a remote destination without worrying about the connection state between the client and server. If there is no active connection, the client will persist the messages as long as it manage to create a connection.
+
+If you're looking for a production ready error tracking solution try out [Sentry](sentry.io "Sentry")
 ## Installation
     git clone git@gitlab.com:Pozo/tracking-client-remotely.git && cd tracking-client-remotely
     mvn clean install
@@ -35,7 +37,7 @@ message  +-----> |  vm:localhost | +---> | is available ?+----> |    deliver mes
 ```
 ## Banana for scale
 
-![alt text](http://cdn0.dailydot.com/cache/f9/50/f950e4c4ffb624d260ec08f30d7266bd.jpg "Logo Title Text 1")
+![alt text](https://www.dailydot.com/wp-content/uploads/c23/15/39ebf638f97319f404e3fd2faa6101cd.jpg "Logo Title Text 1")
 ## Licensing
 
 Please see the file called LICENSE.

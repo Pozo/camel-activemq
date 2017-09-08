@@ -1,14 +1,11 @@
-package com.chemaxon.analytics;
+package com.github.pozo.analytics;
 
 public class MQSettings {
-    private static final String LOCAL_BROKER_URI = "vm://test?broker.persistent=true";
-    private static final String REMOTE_BROKER_URI_TEMPLATE = "failover:(nio://%s:%d)";
-
     public static final String LOCAL_ERRORS = "LOCAL.ERRORS";
     public static final String LOCAL_USAGE = "LOCAL.USAGE";
-
     public static final String REMOTE_ERRORS = "REMOTE.ERRORS";
-
+    private static final String LOCAL_BROKER_URI = "vm://test?broker.persistent=true";
+    private static final String REMOTE_BROKER_URI_TEMPLATE = "failover:(nio://%s:%d)";
     private final String host;
     private final int port;
 
@@ -21,7 +18,7 @@ public class MQSettings {
     }
 
     public String getRemoteBrokerUri() {
-        final String remoteHostBase = String.format(REMOTE_BROKER_URI_TEMPLATE,host,port);
+        final String remoteHostBase = String.format(REMOTE_BROKER_URI_TEMPLATE, host, port);
         final StringBuilder remoteUri = new StringBuilder(remoteHostBase);
 
         if (reconnectDelayInSeconds != 0) {
